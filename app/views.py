@@ -7,7 +7,8 @@ This file creates your application.
 
 from app import app
 from flask import render_template, request, redirect, url_for, flash
-
+from app import mail
+from flask_mail import Message 
 
 ###
 # Routing for your application.
@@ -24,18 +25,29 @@ def about():
     """Render the website's about page."""
     return render_template('about.html', name="Mary Jane")
 
+@app.route('/contact')
+def contact():
+    """Render the website's contact page."""
+    forms = ContactForm()
+    if forms.validate_on_submit():
+        msg = Message(request.forms['subject'], sender=(request.forms['name'], request.forms['email']), \
+            recipients=['@inbox.mailtrap.io'])
+        msg.body = request.forms['message']
+        mail.send(msg)
+        flash('Message sent.')
+        return redirect(url_for('home'))        
+    return render_template('contact.html', forms = forms)
+
 
 ###
 # The functions below should be applicable to all Flask apps.
 ###
-
-
-# Flash errors from the form if validation fails
-def flash_errors(form):
-    for field, errors in form.errors.items():
+# Flash errors from the forms if validation fails 
+def flash_errors(forms):
+    for field, errors in forms.errors.items():
         for error in errors:
             flash(u"Error in the %s field - %s" % (
-                getattr(form, field).label.text,
+                getattr(forms, field).label.text,
                 error
             ), 'danger')
 
